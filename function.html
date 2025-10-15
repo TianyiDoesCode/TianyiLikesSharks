@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MemoCloud</title>
+  <style>
+    :root{--bg:#f6f8fb;--card:#ffffff;--accent:#5b6cff;--muted:#6b7280;--glass:rgba(255,255,255,0.6)}
+    *{box-sizing:border-box}
+    body{font-family:Inter,Segoe UI,Roboto,system-ui,Arial;margin:0;background:linear-gradient(180deg,#eef2ff 0%,var(--bg) 100%);color:#111}
+    header{padding:20px 24px;display:flex;align-items:center;gap:12px}
+    h1{margin:0;font-size:18px}
+    .container{max-width:980px;margin:18px auto;padding:18px}
+    .grid{display:grid;grid-template-columns:360px 1fr;gap:18px}
+    .panel{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 6px 18px rgba(60,64,87,0.06)}
+    label{display:block;font-size:13px;color:var(--muted);margin:8px 0 6px}
+    input[type=text],input[type=date],textarea,select{width:100%;padding:10px;border:1px solid #e6e9ef;border-radius:8px;font-size:14px}
+    textarea{min-height:88px;resize:vertical}
+    .row{display:flex;gap:8px}
+    button{background:var(--accent);color:white;padding:10px 12px;border-radius:10px;border:0;cursor:pointer}
+    button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(91,108,255,0.12)}
+    .timeline{display:flex;flex-direction:column;gap:12px}
+    .card{display:flex;gap:12px;padding:12px;border-radius:12px;background:linear-gradient(180deg,var(--glass),var(--card));align-items:flex-start}
+    .media{width:140px;height:100px;flex:0 0 140px;border-radius:10px;overflow:hidden;background:#f3f4f6;display:flex;align-items:center;justify-content:center}
+    .media img, .media video{width:100%;height:100%;object-fit:cover}
+    .meta{flex:1}
+    .title{font-weight:600;margin:0 0 6px}
+    .tags{display:flex;gap:6px;flex-wrap:wrap}
+    .tag{background:#eef2ff;color:var(--accent);padding:6px 8px;border-radius:999px;font-size:12px}
+    .controls{display:flex;gap:8px;margin-top:8px}
+    .empty{color:var(--muted);padding:28px;border-radius:12px;text-align:center}
+    @media (max-width:900px){.grid{grid-template-columns:1fr;}.media{width:120px;height:82px}}
+    .file-row{display:flex;align-items:center;gap:8px}
+    .file-btn{background:var(--accent);color:#fff;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600;transition:0.2s;box-shadow:0 2px 6px rgba(91,108,255,0.25)}
+    .file-btn:hover{background:#4755e5;transform:translateY(-1px);box-shadow:0 4px 10px rgba(91,108,255,0.35)}
+    #preview{margin-top:10px;width:100%;border-radius:8px;overflow:hidden;background:#f3f4f6;display:none}
+    #preview img,#preview video{width:100%;height:auto;display:block;border-radius:8px}
+  </style>
+</head>
+<body>
+  <header>
+    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24'><rect width='24' height='24' rx='6' fill='%235b6cff'/><path d='M7 12h10M7 8h10M7 16h6' stroke='%23fff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>" alt="logo" style="width:38px;height:38px;border-radius:8px;">
+    <div>
+      <h1>MemoCloud v1.0 - Made by Tianyi</h1>
+      <div style="font-size:13px;color:var(--muted)">Add memories (images/videos], straight from your folder or a link!</div>
+    </div>
+  </header>
+  <main class="container">
+    <div class="grid">
+      <form id="memoryForm" class="panel" autocomplete="off">
+        <input type="hidden" id="editingId">
+        <label for="title">Title</label>
+        <input id="title" type="text" placeholder="exp, First Day of School" required>
+        <label for="date">Date</label>
+        <input id="date" type="date">
+        <label for="mediaType">Media type</label>
+        <select id="mediaType">
+          <option value="image">Image</option>
+          <option value="video">Video</option>
+        </select>
+        <label for="mediaUrl">Media URL or File</label>
+        <div class="file-row">
+          <input id="mediaUrl" type="text" placeholder="https://... (optional)">
+          <input id="mediaFile" type="file" accept="image/*,video/*" hidden>
+          <button id="fileSelectBtn" type="button" class="file-btn">📁 Select File</button>
+        </div>
+        <div id="preview"></div>
+        <label for="tags">Tags (comma separated)</label>
+        <input id="tags" type="text" placeholder="family, birthday, 2019">
+        <label for="note">Note</label>
+        <textarea id="note" placeholder="Write a short memory or story..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+          <button id="saveBtn" type="submit">Save memory</button>
+          <button id="clearBtn" type="button" class="ghost">Clear form</button>
+          <div style="margin-left:auto;color:var(--muted);font-size:13px">Local only • demo</div>
+        </div>
+      </form>
+      <section class="panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <strong>Timeline</strong>
+          <div style="display:flex;gap:8px">
+            <button id="sortBtn" class="ghost" type="button">Sort: Newest</button>
+            <button id="exportBtn" class="ghost" type="button">Export JSON</button>
+          </div>
+        </div>
+        <div id="timeline" class="timeline">
+          <div id="empty" class="empty">No memories yet — add one!</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const form=document.getElementById('memoryForm');
+    const titleIn=document.getElementById('title');
+    const dateIn=document.getElementById('date');
+    const mediaTypeIn=document.getElementById('mediaType');
+    const mediaUrlIn=document.getElementById('mediaUrl');
+    const tagsIn=document.getElementById('tags');
+    const noteIn=document.getElementById('note');
+    const timeline=document.getElementById('timeline');
+    const empty=document.getElementById('empty');
+    const editingId=document.getElementById('editingId');
+    const sortBtn=document.getElementById('sortBtn');
+    const exportBtn=document.getElementById('exportBtn');
+    const fileInput=document.getElementById('mediaFile');
+    const fileBtn=document.getElementById('fileSelectBtn');
+    const preview=document.getElementById('preview');
+
+    const STORAGE_KEY='memocloud_v1.1';
+    let memories=load();
+    let sortNewest=true;
+    let currentFileData='';
+
+    function uid(){return'm_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8)}
+    function saveToStorage(){localStorage.setItem(STORAGE_KEY,JSON.stringify(memories))}
+    function load(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||[]}catch(e){return[]}}
+
+
+
+    fileBtn.addEventListener('click',()=>fileInput.click());
+    fileInput.addEventListener('change',()=>{
+      const file=fileInput.files[0];
+      if(file){
+        const reader=new FileReader();
+        reader.onload=()=>{
+          currentFileData=reader.result; 
+          showPreview(currentFileData, file.type);
+          mediaUrlIn.value='(File selected: '+file.name+')';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    function showPreview(url,type){
+      preview.innerHTML='';
+      preview.style.display='block';
+      if(type.startsWith('image')){
+        const img=document.createElement('img');
+        img.src=url;
+        preview.appendChild(img);
+      }else if(type.startsWith('video')){
+        const vid=document.createElement('video');
+        vid.src=url;
+        vid.controls=true;
+        preview.appendChild(vid);
+      }
+    }
+
+    function render(){
+      timeline.innerHTML='';
+      if(memories.length===0){timeline.appendChild(empty);return}
+      const list=[...memories].sort((a,b)=>sortNewest?b.date-a.date:a.date-b.date);
+      list.forEach(m=>{
+        const card=document.createElement('article');card.className='card';
+        const media=document.createElement('div');media.className='media';
+        if(m.mediaUrl){
+          if(m.mediaType==='image'){
+            const img=document.createElement('img');img.src=m.mediaUrl;img.alt=m.title||'media';
+            img.onerror=()=>{img.src='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="120"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23999" font-size="14">Image not found</text></svg>'}
+            media.appendChild(img);
+          }else{
+            const vid=document.createElement('video');vid.src=m.mediaUrl;vid.controls=true;vid.playsInline=true;media.appendChild(vid);
+          }
+        }else{
+          media.innerHTML='<div style="padding:8px;color:var(--muted);font-size:13px">No media</div>'
+        }
+        const meta=document.createElement('div');meta.className='meta';
+        const t=document.createElement('h3');t.className='title';t.textContent=m.title||'(Untitled)';
+        const d=document.createElement('div');d.style.color='var(--muted)';d.style.fontSize='13px';
+        d.textContent=m.date?new Date(m.date).toLocaleDateString():'';
+        const note=document.createElement('p');note.style.margin='8px 0 6px';note.textContent=m.note||'';
+        const tagWrap=document.createElement('div');tagWrap.className='tags';
+        (m.tags||[]).forEach(tag=>{const s=document.createElement('span');s.className='tag';s.textContent=tag;tagWrap.appendChild(s)});
+        const controls=document.createElement('div');controls.className='controls';
+        const editBtn=document.createElement('button');editBtn.type='button';editBtn.className='ghost';editBtn.textContent='Edit';
+        editBtn.onclick=()=>{loadIntoForm(m.id)};
+        const delBtn=document.createElement('button');delBtn.type='button';delBtn.textContent='Delete';
+        delBtn.onclick=()=>{if(confirm('Delete this memory?')){memories=memories.filter(x=>x.id!==m.id);saveToStorage();render()}};
+        controls.appendChild(editBtn);controls.appendChild(delBtn);
+        meta.appendChild(t);meta.appendChild(d);meta.appendChild(note);meta.appendChild(tagWrap);meta.appendChild(controls);
+        card.appendChild(media);card.appendChild(meta);timeline.appendChild(card);
+      })
+    }
+
+    function loadIntoForm(id){
+      const m=memories.find(x=>x.id===id);if(!m)return;
+      editingId.value=m.id;
+      titleIn.value=m.title||'';
+      dateIn.value=m.date?new Date(m.date).toISOString().slice(0,10):'';
+      mediaTypeIn.value=m.mediaType||'image';
+      mediaUrlIn.value=m.mediaUrl||'';
+      tagsIn.value=(m.tags||[]).join(', ');
+      noteIn.value=m.note||'';
+      if(m.mediaUrl) showPreview(m.mediaUrl, m.mediaType);
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+
+    form.addEventListener('submit',e=>{
+      e.preventDefault();
+      const id=editingId.value||uid();
+      let mediaUrl=mediaUrlIn.value.trim();
+
+
+      if(currentFileData) mediaUrl=currentFileData;
+
+      const obj={id,title:titleIn.value.trim(),date:dateIn.value?new Date(dateIn.value).getTime():Date.now(),mediaType:mediaTypeIn.value,mediaUrl,tags:tagsIn.value.split(',').map(s=>s.trim()).filter(Boolean),note:noteIn.value.trim()};
+      const idx=memories.findIndex(x=>x.id===id);
+      if(idx>=0)memories[idx]=obj;else memories.push(obj);
+      saveToStorage();
+      form.reset();editingId.value='';preview.style.display='none';currentFileData='';
+      render();
+    });
+
+    document.getElementById('clearBtn').addEventListener('click',()=>{form.reset();editingId.value='';preview.style.display='none';currentFileData='';});
+    sortBtn.addEventListener('click',()=>{sortNewest=!sortNewest;sortBtn.textContent='Sort: '+(sortNewest?'Newest':'Oldest');render()});
+    exportBtn.addEventListener('click',()=>{
+      const dataStr=JSON.stringify(memories,null,2);
+      const blob=new Blob([dataStr],{type:'application/json'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download='memories.json';a.click();URL.revokeObjectURL(url);
+    });
+    render();
+  </script>
+</body>
+</html>
